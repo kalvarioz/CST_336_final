@@ -83,10 +83,9 @@ playlist_songs:
 ```
 Timeline: 
 Friday, April 16:
-Express routes and views are complete.
-Database and cloud are ready.
+Express routes and login skeletons have been completed.
+Cloud storage test was successful.
 API choices are complete.
-Basic login is complete
 
 Friday, April 21:
 Design for webpages completed (using css or bootstrap)
