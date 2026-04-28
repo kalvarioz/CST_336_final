@@ -1,14 +1,12 @@
-// config/db.js
-// MySQL connection pool for JawsDB.
-// JawsDB's free tier (Kitefin) limits concurrent connections,
-// so we keep the pool small.
-// Author: Brandon Calvario
+// config/db.mjs
+// MySQL connection pool for JawsDB
 
-const mysql = require("mysql2/promise");
-require("dotenv").config();
+// Brandon Calvario 
 
-// Parse the JAWSDB_URL connection string
-// Format: mysql://USER:PASS@HOST:PORT/DATABASE
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+dotenv.config();
+
 const pool = mysql.createPool({
     uri: process.env.JAWSDB_URL,
     connectionLimit: 5,
@@ -26,4 +24,4 @@ pool.getConnection()
         console.error("[DB] Connection failed:", err.message);
     });
 
-module.exports = pool;
+export default pool;

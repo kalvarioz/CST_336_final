@@ -1,0 +1,59 @@
+<!--
+@author: Brandon Calvario
+-->
+<%- include("partials/header") %>
+
+    <main class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+
+                <div class="text-center mb-4">
+                    <i class="bi bi-music-note-beamed display-3 text-primary"></i>
+                    <h2 class="mt-2">Welcome Back</h2>
+                    <p class="text-muted">Log in to access your music</p>
+                </div>
+
+                <!-- Error alert (hidden by default, shown by JS) -->
+                <div id="loginErrors" class="alert alert-danger d-none" role="alert"></div>
+
+                <!-- Login Form -->
+                <!-- Rubric: text input + password field = 2 of 3+ required form types -->
+                <form action="/api/auth/login" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                            placeholder="Enter your username" required autocomplete="username">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                            placeholder="Enter your password" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="loginBtn">
+                        Log In
+                    </button>
+                </form>
+                <!-- <script>
+                    const eyeIcon = document.querySelector("#eyeIcon");;
+                    eyeIcon.addEventListener("click", () => {
+                        const isHidden = pwd.type === "password";
+                        pwd.type = (isHidden) ? "text" : "password";
+                        eyeIcon.classList.toggle("bi-eye", !isHidden);
+                        eyeIcon.classList.toggle("bi-eye-slash", isHidden);
+                    });
+                </script> -->
+                <p class="text-center mt-3">
+                    Don&rsquo;t have an account?
+                    <a href="/signup">Sign up here</a>
+                </p>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Page-specific JS -->
+    <!-- <script src="/js/auth.js"></script> -->
+
+    <%- include("partials/footer") %>
