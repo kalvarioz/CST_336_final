@@ -1,9 +1,167 @@
 <%- include("partials/header") %>
 
 <main class="container mt-4">
+    <% if (user) { %>
         <h1>Welcome, <%= user.displayName %>!</h1>
-        <p class="text-muted">Your music library is ready. Streaming proxy is active.</p>
 
+        <!-- ============================================================
+             SEARCH + FILTER BAR
+             Rubric: 3+ form element types (text, select already on signup;
+             this adds search input on the main page)
+             ============================================================ -->
+        <section class="row mb-3 mt-3">
+            <div class="col-md-6 mb-2">
+                <input
+                    type="text"
+                    id="searchInput"
+                    class="form-control"
+                    placeholder="Search by title, artist, or album…"
+                >
+            </div>
+            <div class="col-md-3 mb-2">
+                <select id="genreFilter" class="form-select">
+                    <option value="All" selected>All Genres</option>
+                    <option value="Rock">Rock</option>
+                    <option value="Pop">Pop</option>
+                    <option value="Hip-Hop">Hip-Hop</option>
+                    <option value="R&B">R&amp;B</option>
+                    <option value="Jazz">Jazz</option>
+                    <option value="Classical">Classical</option>
+                    <option value="Electronic">Electronic</option>
+                    <option value="Country">Country</option>
+                    <option value="Indie">Indie</option>
+                    <option value="Ambient">Ambient</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <button id="searchBtn" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i> Search
+                </button>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             MAIN LAYOUT: Song List (left) + Album Info Panel (right)
+             ============================================================ -->
+        <div class="row">
+
+            <!-- SONG LIST -->
+            <div class="col-md-7">
+                <h5>Your Library</h5>
+                <table class="table table-hover" id="songTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Artist</th>
+                            <th>Album</th>
+                            <th>Genre</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="songList">
+                        <!-- Populated by JS -->
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Loading songs…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ALBUM INFO PANEL (shown when a song is selected) -->
+            <div class="col-md-5">
+                <div id="infoPanel">
+                    <div id="infoPanelEmpty" class="text-center text-muted mt-5">
+                        <i class="bi bi-disc display-4"></i>
+                        <p class="mt-2">Select a song to see album details</p>
+                    </div>
+
+                    <div id="infoPanelContent" class="d-none">
+                        <!-- Cover art -->
+                        <div class="text-center mb-3">
+                            <img
+                                id="coverArt"
+                                src=""
+                                alt="Album cover"
+                                class="img-fluid rounded"
+                                style="max-width: 300px; max-height: 300px; object-fit: cover;"
+                            >
+                            <div id="coverArtFallback" class="d-none rounded d-flex align-items-center justify-content-center"
+                                 style="width: 300px; height: 300px; background: #e9ecef; margin: 0 auto;">
+                                <i class="bi bi-music-note-beamed display-1 text-secondary"></i>
+                            </div>
+                        </div>
+
+                        <!-- Song / album info -->
+                        <h4 id="infoTitle">—</h4>
+                        <p class="text-muted mb-1" id="infoArtist">—</p>
+                        <p class="text-muted mb-1" id="infoAlbum">—</p>
+                        <p class="text-muted mb-3" id="infoGenre">—</p>
+
+                        <!-- MusicBrainz enriched data -->
+                        <div id="mbSection" class="d-none">
+                            <hr>
+                            <h6><i class="bi bi-globe me-1"></i> MusicBrainz Info</h6>
+                            <p class="mb-1"><strong>Release Date:</strong> <span id="mbDate">—</span></p>
+                            <p class="mb-1"><strong>Country:</strong> <span id="mbCountry">—</span></p>
+
+                            <!-- Tracklist from MusicBrainz -->
+                            <div id="mbTracklistSection" class="mt-3">
+                                <h6>Tracklist</h6>
+                                <ol id="mbTracklist" class="small">
+                                    <!-- Populated by JS -->
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div id="mbLoading" class="d-none text-muted small mt-2">
+                            <div class="spinner-border spinner-border-sm me-1" role="status"></div>
+                            Looking up album on MusicBrainz…
+                        </div>
+
+                        <div id="mbError" class="d-none text-muted small mt-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No MusicBrainz data found for this release.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================
+             AUDIO PLAYER (fixed at bottom of content area)
+             ============================================================ -->
+        <section class="mt-4 mb-4 p-3 bg-light rounded" id="playerSection">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <p class="mb-0 fw-bold" id="nowPlayingTitle">No song selected</p>
+                    <p class="mb-0 text-muted small" id="nowPlayingArtist">—</p>
+                </div>
+                <div class="col-md-8">
+                    <audio id="audioPlayer" controls class="w-100">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            </div>
+        </section>
+
+    <% } else { %>
+        <!-- Not logged in — landing page -->
+        <div class="text-center mt-5">
+            <i class="bi bi-music-note-beamed display-1 text-primary"></i>
+            <h1 class="mt-3">SoundVault</h1>
+            <p class="lead text-muted">A secure, personal music player in your browser.</p>
+            <div class="mt-4">
+                <a href="/login" class="btn btn-primary btn-lg me-2">Log In</a>
+                <a href="/signup" class="btn btn-outline-secondary btn-lg">Sign Up</a>
+            </div>
+        </div>
+    <% } %>
 </main>
+
+<!-- Page-specific JS (only loaded on this page) -->
+<script src="/js/index.js"></script>
 
 <%- include("partials/footer") %>

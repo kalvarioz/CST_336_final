@@ -1,5 +1,7 @@
 # SoundVault
 
+https://soundvault-fs46.onrender.com
+
 ## Project Description: 
 SoundVault is a web-based music player inspired by offline, local music players such as Foobar2000, Strawberry, and AIMP. It allows authenticated users to browse a curated music library, stream tracks securely via a server-side proxy, create and manage personal playlists, and discover music through album art and metadata pulled from the MusicBrainz API. A local Express API serves as the music catalog and streaming backend, while all audio files are stored in cloud storage and are never directly exposed to the browser.
 
