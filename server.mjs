@@ -483,12 +483,7 @@ app.post("/api/songs/enrich-all", requireLogin, async (req, res) => {
 });
 
 
-// ============================================================
-// 404 HANDLER
-// ============================================================
-app.use((req, res) => {
-    res.status(404).send("Page not found");
-});
+
 
 
 // ============================================================
@@ -496,4 +491,76 @@ app.use((req, res) => {
 // ============================================================
 app.listen(PORT, () => {
     console.log(`[SERVER] SoundVault running at http://localhost:${PORT}`);
+});
+
+
+// Playlist features by Matthew Barrett
+// Generate Playlist
+//TODO:
+//1. Allow users to edit playlist name/description
+//2. Allow users to delete playlists
+//3. Allow users to add songs to playlist when inside playlist.ejs route
+//4. Allow users to add songs to playlist when insdie index.ejs route
+//5. Allow users to create accounts
+
+app.post('/api/playlist', requireLogin, async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        const userId = req.session.user_id;
+        if (name == null || name == undefined) {
+            return res.send("Playlist must have a name");
+        }
+        let trimmedName = name.trim();
+        if (trimmedName.length <= 3) {
+            return res.send("Playlist name must be longer than three characters");
+        }
+        const [rows] = await db.query(`
+            INSERT INTO playlists (name, description, user_id)
+            VALUES (?,?,?)`, [trimmedName, description || null, userId]
+        );
+        res.redirect('/playlists');
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Playlist failed" });
+        // not 100% sure what this does but it was in every other try catch and i dont wanna cause problems
+    }
+}); 
+// Get playlists
+
+app.get('/playlists', requireLogin, async (req, res) => {
+    const userId = req.session.user_id;
+    const [playlists] = await db.query
+    (` SELECT *
+       FROM playlists
+       WHERE user_id = ?`, [userId]
+    );
+    res.render('playlists', { playlists });
+});
+
+// View Playlist
+app.get('/playlist/:id', requireLogin, async (req,res) => {
+    const userId = req.session.user_id;
+    const playlistId = req.params.id;
+    const [rows] = await db.query
+    (`SELECT *
+      FROM playlists
+      WHERE playlist_id = ?
+      AND user_id = ?        
+     `,[playlistId, userId]);
+    if (rows.length == 0) {
+        return res.render('playlists');
+    }
+    res.render('playlist', {playlist: rows[0]});
+});
+
+// Create new playlist
+app.get('/newPlaylist', requireLogin, async (req, res) => {
+    res.render('newPlaylist.ejs');
+});
+
+// ============================================================
+// 404 HANDLER
+// ============================================================
+app.use((req, res) => {
+    res.status(404).send("Page not found");
 });

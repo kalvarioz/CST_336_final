@@ -1,0 +1,146 @@
+-- SoundVault - Database Schema
+-- CST 336 Final Project
+-- Run this file in DBeaver connected to your JawsDB instance.
+-- It will drop existing tables (if any) and recreate them cleanly.
+
+-- Disable FK checks during table creation to avoid ordering issues
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- TABLE 1: users
+-- Stores account credentials and profile preferences.
+-- Fields: user_id, username, email, password_hash,
+--         display_name, favorite_genre, show_recent, created_at
+-- (8 fields)
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    user_id         INT             AUTO_INCREMENT PRIMARY KEY,
+    username        VARCHAR(50)     NOT NULL UNIQUE,
+    email           VARCHAR(100)    NOT NULL UNIQUE,
+    password_hash   VARCHAR(255)    NOT NULL,
+    display_name    VARCHAR(50)     NOT NULL,
+    favorite_genre  VARCHAR(30)     DEFAULT 'All',
+    show_recent     TINYINT(1)      DEFAULT 1,
+    created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- TABLE 2: songs
+-- Music catalog — metadata only. Actual audio lives in
+-- Cloudflare R2. The cloud_key column maps to the R2 object
+-- key but is NEVER exposed to the client.
+-- Fields: song_id, title, artist, album, genre,
+--         duration_sec, cloud_key, mb_release_id
+-- (8 fields)
+DROP TABLE IF EXISTS songs;
+
+CREATE TABLE songs (
+    song_id         INT             AUTO_INCREMENT PRIMARY KEY,
+    title           VARCHAR(150)    NOT NULL,
+    artist          VARCHAR(100)    NOT NULL,
+    album           VARCHAR(100)    DEFAULT NULL,
+    genre           VARCHAR(30)     DEFAULT 'Other',
+    duration_sec    INT             DEFAULT 0,
+    cloud_key       VARCHAR(255)    NOT NULL,
+    mb_release_id   VARCHAR(36)     DEFAULT NULL,
+
+    -- Index for search queries (library browsing, search page)
+    INDEX idx_artist (artist),
+    INDEX idx_genre  (genre),
+    -- Full-text index for search functionality
+    FULLTEXT idx_search (title, artist, album)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- TABLE 3: playlists
+-- Each user can have multiple playlists.
+-- Fields: playlist_id, user_id, name, created_at
+-- (4 fields)
+DROP TABLE IF EXISTS playlists;
+
+CREATE TABLE playlists (
+    playlist_id     INT             AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT             NOT NULL,
+    name            VARCHAR(100)    NOT NULL,
+    created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+
+    -- Foreign key to users table
+    CONSTRAINT fk_playlist_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- TABLE 4: playlist_songs (junction table)
+-- Maps songs to playlists with ordering support.
+-- Fields: id, playlist_id, song_id, position, added_at
+-- (5 fields)
+DROP TABLE IF EXISTS playlist_songs;
+
+CREATE TABLE playlist_songs (
+    id              INT             AUTO_INCREMENT PRIMARY KEY,
+    playlist_id     INT             NOT NULL,
+    song_id         INT             NOT NULL,
+    position        INT             NOT NULL DEFAULT 0,
+    added_at        TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+
+    -- Prevent duplicate songs in the same playlist
+    UNIQUE KEY uq_playlist_song (playlist_id, song_id),
+    -- Foreign keys
+    CONSTRAINT fk_ps_playlist
+        FOREIGN KEY (playlist_id) REFERENCES playlists(playlist_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_ps_song
+        FOREIGN KEY (song_id) REFERENCES songs(song_id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Re-enable FK checks
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- SEED DATA
+-- Sample data for development and testing.
+-- Passwords are bcrypt hashes — both test accounts use
+-- the password: "testpass123"
+
+-- Sample playlists for demo_user
+INSERT INTO playlists (user_id, name) VALUES
+    (1, 'Chill Vibes'),
+    (1, 'Work Focus');
+
+-- Add songs to playlists
+INSERT INTO playlist_songs (playlist_id, song_id, position) VALUES
+    -- Chill Vibes playlist
+    (1, 1, 1),   -- Wavelength
+    (1, 6, 2),   -- Calm The Fold
+    (1, 4, 3),   -- Summer Splash
+    -- Work Focus playlist
+    (2, 3, 1),   -- Night Owl
+    (2, 7, 2),   -- Something Elated
+    (2, 2, 3);   -- Spinning Wheel
+
+
+-- USEFUL QUERIES (for reference / testing in DBeaver)
+-- Verify all tables exist and show field counts:
+-- SELECT TABLE_NAME, COUNT(*) AS field_count
+-- FROM INFORMATION_SCHEMA.COLUMNS
+-- WHERE TABLE_SCHEMA = DATABASE()
+-- GROUP BY TABLE_NAME;
+-- Get a user's playlists with song count:
+-- SELECT p.playlist_id, p.name, COUNT(ps.song_id) AS song_count
+-- FROM playlists p
+-- LEFT JOIN playlist_songs ps ON p.playlist_id = ps.playlist_id
+-- WHERE p.user_id = 1
+-- GROUP BY p.playlist_id;
+-- Search songs by keyword (uses FULLTEXT index):
+-- SELECT song_id, title, artist, album
+-- FROM songs
+-- WHERE MATCH(title, artist, album) AGAINST('broke' IN NATURAL LANGUAGE MODE);
+-- Get all songs in a playlist (ordered):
+-- SELECT s.song_id, s.title, s.artist, s.album, s.duration_sec, ps.position
+-- FROM playlist_songs ps
+-- JOIN songs s ON ps.song_id = s.song_id
+-- WHERE ps.playlist_id = 1
+-- ORDER BY ps.position;
+-- Update user profile (the UPDATE requirement):
+-- UPDATE users
+-- SET display_name = 'New Name', email = 'new@email.com', favorite_genre = 'Jazz'
+-- WHERE user_id = 1;

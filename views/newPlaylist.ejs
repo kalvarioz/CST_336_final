@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Playlist</title>
+</head>
+<body>
+    <h1>Creating a New Playlist</h1>
+    <div class="mb-3">
+        <form action ="/api/playlist" method ="POST" >
+            <label>Playlist Name:</label>
+            <input type="text" name="name" required>
+            <br>
+            <label>Playlist Description:</label>
+            <textarea name="description"></textarea>
+            <button type = "submit">Create</button>
+        </form>
+    </div>
+    <a href="/playlist" class="button">Back to Playlists</a>
+</body>
+</html>

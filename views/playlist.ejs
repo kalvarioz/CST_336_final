@@ -1,0 +1,28 @@
+<!-- By Matthew Barrett -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%=playlist.name%></title>
+</head>
+<body>
+    <h1><%=playlist.name%></h1>
+    <% if (playlist.description) {%>
+        <p><%=playlist.description%></p>
+    <%} else { %>
+        <p>No description provided</p>
+    <% } %>
+    <h3>Songs</h3>
+    <% if (playlist.songs && playlist.songs.length > 0) {%>
+        <ul>
+            <% for (let song of playlist.song) { %>
+                <li><%= song.name %> by <%= song.artist %></li>
+            <% } %>
+        </ul>
+    <%} else { %>
+        <p>Playlist is empty</p>
+    <% } %>
+    <a href="/playlists" class="button">Back to Playlists</a>
+</body>
+</html>
