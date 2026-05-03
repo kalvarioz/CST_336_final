@@ -1,5 +1,3 @@
-
-// ============================================================
 // scripts/bulk-import.js
 //
 // Bulk import audio files into SoundVault.
@@ -14,7 +12,6 @@
 //
 // Requirements (install once):
 //   npm install music-metadata @aws-sdk/lib-storage
-// ============================================================
  
 require("dotenv").config();
 const fs = require("fs");
@@ -85,20 +82,20 @@ async function readMetadata(filePath) {
         const { common, format } = metadata;
  
         return {
-            title:    common.title   || path.basename(filePath, path.extname(filePath)),
-            artist:   common.artist  || "Unknown Artist",
-            album:    common.album   || null,
-            genre:    common.genre?.[0] || "Other",
+            title:common.title|| path.basename(filePath, path.extname(filePath)),
+            artist:common.artist || "Unknown Artist",
+            album:common.album|| null,
+            genre:common.genre?.[0] || "Other",
             duration: Math.round(format.duration || 0),  // seconds
         };
     } catch (err) {
         console.warn(`  [WARN] Could not read metadata from ${path.basename(filePath)}: ${err.message}`);
         // Fall back to filename-based info
         return {
-            title:    path.basename(filePath, path.extname(filePath)),
-            artist:   "Unknown Artist",
-            album:    null,
-            genre:    "Other",
+            title:path.basename(filePath, path.extname(filePath)),
+            artist:"Unknown Artist",
+            album:null,
+            genre:"Other",
             duration: 0,
         };
     }
@@ -116,7 +113,6 @@ async function uploadToR2(filePath, cloudKey) {
     const ext = path.extname(filePath).toLowerCase();
     const fileStream = fs.createReadStream(filePath);
     const fileSize = fs.statSync(filePath).size;
- 
     const upload = new Upload({
         client: r2Client,
         params: {
@@ -130,7 +126,6 @@ async function uploadToR2(filePath, cloudKey) {
         partSize: 10 * 1024 * 1024, // 10MB per chunk (good for large FLAC files)
         leavePartsOnError: false,   // Clean up failed uploads
     });
- 
     // Progress tracking
     upload.on("httpUploadProgress", (progress) => {
         if (progress.loaded && fileSize > 0) {
@@ -138,7 +133,6 @@ async function uploadToR2(filePath, cloudKey) {
             process.stdout.write(`\r    Uploading: ${pct}%`);
         }
     });
- 
     await upload.done();
     process.stdout.write(`\r    Uploading: 100% - Done\n`);
 }
@@ -155,18 +149,15 @@ async function insertIntoDb(db, metadata, cloudKey) {
         "SELECT song_id FROM songs WHERE cloud_key = ?",
         [cloudKey]
     );
- 
     if (existing.length > 0) {
         console.log(`    DB: Already exists (song_id ${existing[0].song_id}), skipping`);
         return existing[0].song_id;
     }
- 
     const [result] = await db.query(
         `INSERT INTO songs (title, artist, album, genre, duration_sec, cloud_key)
          VALUES (?, ?, ?, ?, ?, ?)`,
         [metadata.title, metadata.artist, metadata.album, metadata.genre, metadata.duration, cloudKey]
     );
- 
     console.log(`    DB: Inserted as song_id ${result.insertId}`);
     return result.insertId;
 }
@@ -196,32 +187,26 @@ async function main() {
         console.error("  node scripts/bulk-import.js ./test-songs");
         process.exit(1);
     }
- 
     // Resolve to absolute path
     const resolvedPath = path.resolve(folderPath);
- 
     if (!fs.existsSync(resolvedPath)) {
         console.error(`Error: folder not found: ${resolvedPath}`);
         process.exit(1);
     }
- 
     console.log("==============================================");
     console.log("  SoundVault Bulk Import");
     console.log("==============================================");
     console.log(`Source folder: ${resolvedPath}`);
     console.log(`R2 bucket:    ${BUCKET}`);
     console.log("");
- 
     // Step 1: Scan for audio files
     console.log("[1/4] Scanning for audio files...");
     const files = scanFolder(resolvedPath);
     console.log(`  Found ${files.length} audio file(s)\n`);
- 
     if (files.length === 0) {
         console.log("No supported audio files found. Exiting.");
         process.exit(0);
     }
- 
     // Show what we found
     let totalSize = 0;
     for (const f of files) {
@@ -230,25 +215,20 @@ async function main() {
         console.log(`  ${path.basename(f)} (${formatFileSize(size)})`);
     }
     console.log(`\n  Total: ${formatFileSize(totalSize)}\n`);
- 
     // Step 2: Connect to database
     console.log("[2/4] Connecting to JawsDB...");
     const db = await mysql.createConnection(process.env.JAWSDB_URL);
     console.log("  Connected\n");
- 
     // Step 3 & 4: Process each file
     console.log("[3/4] Processing files...\n");
     let successCount = 0;
     let skipCount = 0;
     let errorCount = 0;
- 
     for (let i = 0; i < files.length; i++) {
         const filePath = files[i];
         const fileName = path.basename(filePath);
         const ext = path.extname(fileName).toLowerCase();
- 
         console.log(`[${i + 1}/${files.length}] ${fileName}`);
- 
         try {
             // Read metadata from the file
             const metadata = await readMetadata(filePath);
@@ -257,7 +237,6 @@ async function main() {
             console.log(`    Album:    ${metadata.album || "(none)"}`);
             console.log(`    Genre:    ${metadata.genre}`);
             console.log(`    Duration: ${Math.floor(metadata.duration / 60)}:${(metadata.duration % 60).toString().padStart(2, "0")}`);
- 
             // Build the cloud key
             // Sanitize filename: replace spaces with hyphens, remove special chars
             const sanitized = fileName
@@ -278,22 +257,17 @@ async function main() {
                 skipCount++;
                 continue;
             }
- 
             // Upload to R2
             await uploadToR2(filePath, cloudKey);
- 
             // Insert into database
             await insertIntoDb(db, metadata, cloudKey);
             successCount++;
- 
         } catch (err) {
             console.error(`    ERROR: ${err.message}`);
             errorCount++;
         }
- 
         console.log("");
     }
- 
     // Summary
     console.log("==============================================");
     console.log("  Import Complete");
@@ -306,7 +280,6 @@ async function main() {
     await db.end();
     process.exit(0);
 }
- 
 main().catch(err => {
     console.error("Fatal error:", err);
     process.exit(1);

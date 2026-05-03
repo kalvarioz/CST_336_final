@@ -2,9 +2,9 @@
 // Main library page logic.
 //
 // Fetch calls used (rubric: at least 2 local or external Web APIs):
-//   1. GET /api/songs              — local API, fetches song list from MySQL
-//   2. GET /api/songs/stream/:id   — local API, streams audio through Express proxy
-//   3. GET /api/musicbrainz/search — local API that calls the external MusicBrainz API
+//   1. GET /api/songs: local API, fetches song list from MySQL
+//   2. GET /api/songs/stream/:id: local API, streams audio through Express proxy
+//   3. GET /api/musicbrainz/search: local API that calls the external MusicBrainz API
 //
 // This file provides 100+ lines of client-side JavaScript (rubric: 50+ lines).
 
@@ -45,7 +45,7 @@ function formatDuration(totalSeconds) {
 }
 // Convert milliseconds to M:SS (MusicBrainz uses ms)
 function formatMs(ms) {
-    if (!ms) return "—";
+    if (!ms) return "-";
     return formatDuration(Math.round(ms / 1000));
 }
 
@@ -118,7 +118,7 @@ function selectSong(songId) {
     audioPlayer.src = `/api/songs/stream/${songId}`;
     audioPlayer.load();
     audioPlayer.play().catch(err => {
-        // Autoplay might be blocked by browser — that's OK,
+        // Autoplay might be blocked by browser, that's OK,
         // the user can click the play button manually
         console.log("Autoplay blocked:", err.message);
     });
@@ -181,14 +181,14 @@ async function fetchMusicBrainzInfo(song) {
     try {
         let releaseData = null;
         if (song.mb_release_id) {
-            // --- Path B: already enriched, just fetch display data ---
+            // Path B: already enriched, just fetch display data 
             const resp = await fetch(`/api/musicbrainz/release/${song.mb_release_id}`);
             if (resp.ok) {
                 const data = await resp.json();
                 if (!data.message) releaseData = data;
             }
         } else if (song.album) {
-            // --- Path A: not enriched yet, ask the server to do it ---
+            // Path A: not enriched yet, ask the server to do it
             // The server will search MusicBrainz, update the DB with
             // mb_release_id and genre, and return the full result.
             const resp = await fetch(`/api/songs/enrich/${song.song_id}`, {
@@ -279,7 +279,7 @@ if (searchInput) {
     });
 }
 
-// Genre dropdown change — auto-search
+// Genre dropdown change auto-search
 if (genreFilter) {
     genreFilter.addEventListener("change", () => {
         loadSongs();

@@ -1,11 +1,10 @@
-// ============================================================
+
 // server.mjs
-// SoundVault main entry point (ES Module version).
-//
+// SoundVault main entry point
 // ARCHITECTURE:
-//   server.mjs    → routes only (thin handlers)
-//   api/*.mjs     → business logic (queries, validation, hashing)
-//   config/*.mjs  → infrastructure (DB pool, R2 client, etc.)
+//   server.mjs: routes only (thin handlers)
+//   api/*.mjs: business logic (queries, validation, hashing)
+//   config/*.mjs: infrastructure (DB pool, R2 client, etc.)
 //
 // Each route handler follows the same pattern:
 //   1. Parse the request (params, body, session)
@@ -14,28 +13,27 @@
 //
 // Security notes:
 //   - Passwords are hashed with bcrypt inside authAPI.mjs
-//   - Audio streams through our Express proxy — the browser
+//   - Audio streams through our Express proxy, the browser
 //     never sees the R2 URL or credentials
 //   - Session cookie is httpOnly (JS can't read it)
 //   - The requireLogin middleware gates protected routes
-// ============================================================
 
-import dotenv       from "dotenv";
+/** 
+ * @authors: Brandon Calvario, Matthew Barrett
+*/
+
+import dotenv from "dotenv";
 dotenv.config();
-
-import express      from "express";
-import session      from "express-session";
-import path         from "path";
-import { fileURLToPath }    from "url";
+import express from "express";
+import session from "express-session";
+import path from "path";
+import { fileURLToPath } from "url";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-
-// --- Config imports (infrastructure) ---
-import db                        from "./config/db.mjs";
+import db from "./config/db.mjs";
 import { r2Client, BUCKET_NAME } from "./config/r2.mjs";
-import { requireLogin }          from "./config/auth.mjs";
+import { requireLogin } from "./config/auth.mjs";
 import { searchRelease, lookupRelease, enrichSong } from "./config/musicbrainz.mjs";
-
-// --- API imports (business logic) ---
+//API imports (business logic)
 import {
     validateSignup,
     validateLogin,
@@ -46,33 +44,19 @@ import {
     getUserProfile,
     updateUserProfile,
 } from "./api/authAPI.mjs";
-
 import {
     getAllSongs,
     getCloudKey,
 } from "./api/songsAPI.mjs";
-
-// --- __dirname equivalent for ESM ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-
-// --- Express app ---
 const app  = express();
 const PORT = process.env.PORT || 3000;
-
-
-// ============================================================
-// MIDDLEWARE
-// ============================================================
-
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-
-// --- Sessions ---
 app.use(session({
     secret: process.env.SESSION_SECRET || "taco",
     resave: false,
@@ -83,23 +67,16 @@ app.use(session({
     },
 }));
 
-// --- Make session user available to ALL EJS views ---
 app.use((req, res, next) => {
     res.locals.user = req.session.user_id
         ? {
-              id:          req.session.user_id,
-              username:    req.session.username,
+              id:req.session.user_id,
+              username:  req.session.username,
               displayName: req.session.display_name,
           }
         : null;
     next();
-});
-
-
-// ============================================================
-// PAGE ROUTES  (render EJS views)
-// ============================================================
-
+}); 
 app.get("/", (req, res) => {
     if (req.session.user_id) return res.redirect("/index");
     res.redirect("/login");
@@ -107,65 +84,57 @@ app.get("/", (req, res) => {
 
 app.get("/login", (req, res) => {
     if (req.session.user_id) return res.redirect("/index");
-    res.render("login", { title: "Login – SoundVault", errors: [] });
+    res.render("login", { title: "Login - SoundVault", errors: [] });
 });
 
 app.get("/signup", (req, res) => {
     if (req.session.user_id) return res.redirect("/index");
-    res.render("signup", { title: "Sign Up – SoundVault", errors: [] });
+    res.render("signup", { title: "Sign Up - SoundVault", errors: [] });
 });
 
 app.get("/index", requireLogin, (req, res) => {
-    res.render("index", { title: "Library – SoundVault" });
+    res.render("index", { title: "Library - SoundVault" });
 });
 
 app.get("/admin", requireLogin, (req, res) => {
-    res.render("admin", { title: "Admin – SoundVault" });
+    res.render("admin", { title: "Admin - SoundVault" });
 });
 
 
-// ============================================================
 // AUTH ROUTES  (/api/auth/*)
 //
 // These use traditional form submission (not fetch/JSON).
-// On success → res.redirect()
-// On failure → res.render() with error messages
-// ============================================================
-
+// On success: res.redirect()
+// On failure:  res.render() with error messages
 // POST /api/auth/signup
 app.post("/api/auth/signup", async (req, res) => {
     try {
         // 1. Validate input
         const errors = validateSignup(req.body);
         if (errors.length > 0) {
-            return res.render("signup", { title: "Sign Up – SoundVault", errors });
+            return res.render("signup", { title: "Sign Up - SoundVault", errors });
         }
-
         // 2. Check for duplicate username/email
         const { username, email, display_name, password, favorite_genre } = req.body;
         const isDuplicate = await checkDuplicate(username, email);
         if (isDuplicate) {
             return res.render("signup", {
-                title: "Sign Up – SoundVault",
+                title: "Sign Up - SoundVault",
                 errors: ["Username or email already taken"],
             });
         }
-
         // 3. Create the user (hashing happens inside the API)
         const newUser = await createUser({ username, email, display_name, password, favorite_genre });
-
         // 4. Auto-login: set session
-        req.session.user_id      = newUser.user_id;
-        req.session.username     = newUser.username;
+        req.session.user_id = newUser.user_id;
+        req.session.username = newUser.username;
         req.session.display_name = newUser.display_name;
-
         // 5. Redirect to home page
         res.redirect("/index");
-
     } catch (err) {
         console.error("[SIGNUP]", err);
         res.render("signup", {
-            title: "Sign Up – SoundVault",
+            title: "Sign Up - SoundVault",
             errors: ["Server error during signup. Please try again."],
         });
     }
@@ -178,45 +147,39 @@ app.post("/api/auth/login", async (req, res) => {
         // 1. Validate input
         const errors = validateLogin(req.body);
         if (errors.length > 0) {
-            return res.render("login", { title: "Login – SoundVault", errors });
+            return res.render("login", { title: "Login - SoundVault", errors });
         }
-
         // 2. Find user by username
         const { username, password } = req.body;
         const user = await findUserByUsername(username);
         if (!user) {
             return res.render("login", {
-                title: "Login – SoundVault",
+                title: "Login - SoundVault",
                 errors: ["Invalid username or password"],
             });
         }
-
         // 3. Verify password against hash
         const match = await verifyPassword(password, user.password_hash);
         if (!match) {
             return res.render("login", {
-                title: "Login – SoundVault",
+                title: "Login - SoundVault",
                 errors: ["Invalid username or password"],
             });
         }
-
         // 4. Set session
-        req.session.user_id      = user.user_id;
-        req.session.username     = user.username;
+        req.session.user_id = user.user_id;
+        req.session.username = user.username;
         req.session.display_name = user.display_name;
-
         // 5. Redirect to home page
         res.redirect("/index");
-
     } catch (err) {
         console.error("[LOGIN]", err);
         res.render("login", {
-            title: "Login – SoundVault",
+            title: "Login - SoundVault",
             errors: ["Server error during login. Please try again."],
         });
     }
 });
-
 
 // POST /api/auth/logout
 app.post("/api/auth/logout", (req, res) => {
@@ -226,12 +189,8 @@ app.post("/api/auth/logout", (req, res) => {
     });
 });
 
-
-// ============================================================
 // SONG API ROUTES  (/api/songs/*)
-// ============================================================
-
-// GET /api/songs — list/search songs
+// GET /api/songs, list/search songs
 app.get("/api/songs", async (req, res) => {
     try {
         const songs = await getAllSongs(req.query);
@@ -252,26 +211,24 @@ app.get("/api/songs/stream/:id", requireLogin, async (req, res) => {
         // 1. Get the cloud key from the API (never from the client)
         const cloudKey = await getCloudKey(req.params.id);
         if (!cloudKey) return res.status(404).send("Song not found");
-
         console.log("[STREAM] Fetching:", cloudKey);
-
         // 2. Fetch from R2 (pass Range header for seeking)
         const getCmd = new GetObjectCommand({
             Bucket: BUCKET_NAME,
-            Key:    cloudKey,
-            Range:  req.headers.range,
+            Key:cloudKey,
+            Range:req.headers.range,
         });
         const r2Response = await r2Client.send(getCmd);
 
         // 3. Determine content type
         const ext = cloudKey.split(".").pop().toLowerCase();
         const mimeTypes = {
-            mp3:  "audio/mpeg",
-            m4a:  "audio/mp4",
-            mp4:  "audio/mp4",
-            flac: "audio/flac",
-            ogg:  "audio/ogg",
-            wav:  "audio/wav",
+            mp3:"audio/mpeg",
+            m4a:"audio/mp4",
+            mp4:"audio/mp4",
+            flac:"audio/flac",
+            ogg:"audio/ogg",
+            wav:"audio/wav",
         };
         const contentType = r2Response.ContentType
             || mimeTypes[ext]
@@ -286,14 +243,12 @@ app.get("/api/songs/stream/:id", requireLogin, async (req, res) => {
         }
         res.setHeader("Accept-Ranges", "bytes");
         res.setHeader("Cache-Control", "no-store");
-
         // 5. Pipe the R2 stream to the browser
         r2Response.Body.pipe(res);
         r2Response.Body.on("error", err => {
             console.error("[STREAM] R2 stream error:", err);
             if (!res.headersSent) res.status(500).end();
         });
-
     } catch (err) {
         console.error("[STREAM] Error:", err);
         if (!res.headersSent) res.status(500).send("Stream failed");
@@ -301,11 +256,8 @@ app.get("/api/songs/stream/:id", requireLogin, async (req, res) => {
 });
 
 
-// ============================================================
 // USER PROFILE API  (/api/user/*)
 // Rubric: UPDATE SQL with at least 3 fields, pre-filled form
-// ============================================================
-
 // GET /api/user/profile
 app.get("/api/user/profile", requireLogin, async (req, res) => {
     try {
@@ -317,32 +269,24 @@ app.get("/api/user/profile", requireLogin, async (req, res) => {
         res.status(500).json({ error: "Failed to load profile" });
     }
 });
-
 // PUT /api/user/profile
 app.put("/api/user/profile", requireLogin, async (req, res) => {
     try {
         const result = await updateUserProfile(req.session.user_id, req.body);
-
         if (!result.success) {
             return res.status(400).json({ errors: result.errors });
         }
-
         // Keep session in sync
         req.session.display_name = result.display_name;
         res.json({ message: "Profile updated" });
-
     } catch (err) {
         console.error("[PUT /api/user/profile]", err);
         res.status(500).json({ error: "Failed to update profile" });
     }
 });
 
-
-// ============================================================
 // MUSICBRAINZ API  (/api/musicbrainz/*)
 // Rubric: 2+ external Web APIs
-// ============================================================
-
 app.get("/api/musicbrainz/search", async (req, res) => {
     const { artist, album } = req.query;
     if (!artist || !album) {
@@ -358,20 +302,17 @@ app.get("/api/musicbrainz/release/:id", async (req, res) => {
 });
 
 
-// ============================================================
 // SONG ENRICHMENT  (/api/songs/enrich/*)
 //
 // Auto-complete missing MusicBrainz data for songs in the DB.
 // When a user selects a song, the client calls this endpoint
 // to fill in mb_release_id and genre from MusicBrainz.
 // This only updates songs that have NULL mb_release_id.
-// ============================================================
 
-// POST /api/songs/enrich/:id — enrich a single song
+// POST /api/songs/enrich/:id, enrich a single song
 app.post("/api/songs/enrich/:id", requireLogin, async (req, res) => {
     const songId = parseInt(req.params.id, 10);
     if (isNaN(songId)) return res.status(400).json({ error: "Invalid song ID" });
-
     try {
         // 1. Look up the song
         const [rows] = await db.query(
@@ -379,9 +320,7 @@ app.post("/api/songs/enrich/:id", requireLogin, async (req, res) => {
             [songId]
         );
         if (rows.length === 0) return res.status(404).json({ error: "Song not found" });
-
         const song = rows[0];
-
         // 2. Skip if already enriched
         if (song.mb_release_id) {
             return res.json({
@@ -390,55 +329,47 @@ app.post("/api/songs/enrich/:id", requireLogin, async (req, res) => {
                 genre: song.genre,
             });
         }
-
         // 3. Skip if no album to search
         if (!song.album) {
-            return res.json({ message: "No album name — cannot search MusicBrainz" });
+            return res.json({ message: "No album name, cannot search MusicBrainz" });
         }
-
         // 4. Call the enrichSong function (searches + looks up + gets genres)
         const enriched = await enrichSong(song.artist, song.album);
         if (!enriched) {
             return res.json({ message: "No MusicBrainz match found" });
         }
-
         // 5. Update the database
         await db.query(
             "UPDATE songs SET mb_release_id = ?, genre = ? WHERE song_id = ?",
             [enriched.mb_release_id, enriched.genre, songId]
         );
-
-        console.log(`[ENRICH] song_id ${songId}: "${song.title}" → genre="${enriched.genre}", mb_release_id="${enriched.mb_release_id}"`);
-
+        console.log(`[ENRICH] song_id ${songId}: "${song.title}": genre="${enriched.genre}", mb_release_id="${enriched.mb_release_id}"`);
         // 6. Return the enriched data to the client
         res.json({
-            message:       "Enriched successfully",
+            message:"Enriched successfully",
             mb_release_id: enriched.mb_release_id,
-            genre:         enriched.genre,
-            genres:        enriched.genres,
-            date:          enriched.date,
-            country:       enriched.country,
-            tracks:        enriched.tracks,
+            genre:enriched.genre,
+            genres:enriched.genres,
+            date:enriched.date,
+            country:enriched.country,
+            tracks:enriched.tracks,
         });
-
     } catch (err) {
         console.error("[ENRICH]", err);
         res.status(500).json({ error: "Enrichment failed" });
     }
 });
 
-// POST /api/songs/enrich-all — enrich all songs with missing data (admin)
+// POST /api/songs/enrich-all, enrich all songs with missing data (admin)
 app.post("/api/songs/enrich-all", requireLogin, async (req, res) => {
     try {
         // Find all songs missing mb_release_id
         const [songs] = await db.query(
             "SELECT song_id, title, artist, album FROM songs WHERE mb_release_id IS NULL AND album IS NOT NULL"
         );
-
         if (songs.length === 0) {
             return res.json({ message: "All songs already enriched", updated: 0 });
         }
-
         // Group by artist+album to minimize API calls
         const albumMap = new Map();
         for (const song of songs) {
@@ -448,27 +379,22 @@ app.post("/api/songs/enrich-all", requireLogin, async (req, res) => {
             }
             albumMap.get(key).songIds.push(song.song_id);
         }
-
         let updated = 0;
         let failed  = 0;
-
         for (const [, group] of albumMap) {
             const enriched = await enrichSong(group.artist, group.album);
             if (!enriched) {
                 failed += group.songIds.length;
                 continue;
             }
-
             // Batch update all songs in this album group
             await db.query(
                 "UPDATE songs SET mb_release_id = ?, genre = ? WHERE song_id IN (?)",
                 [enriched.mb_release_id, enriched.genre, group.songIds]
             );
             updated += group.songIds.length;
-
-            console.log(`[ENRICH-ALL] "${group.artist} – ${group.album}" → ${group.songIds.length} song(s) updated`);
+            console.log(`[ENRICH-ALL] "${group.artist} – ${group.album}":  ${group.songIds.length} song(s) updated`);
         }
-
         res.json({
             message: "Enrichment complete",
             updated,
@@ -482,18 +408,10 @@ app.post("/api/songs/enrich-all", requireLogin, async (req, res) => {
     }
 });
 
-
-
-
-
-// ============================================================
 // START SERVER
-// ============================================================
 app.listen(PORT, () => {
     console.log(`[SERVER] SoundVault running at http://localhost:${PORT}`);
 });
-
-
 // Playlist features by Matthew Barrett
 // Generate Playlist
 //TODO:
