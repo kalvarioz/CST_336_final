@@ -100,6 +100,11 @@ app.get("/admin", requireLogin, (req, res) => {
     res.render("admin", { title: "Admin - SoundVault" });
 });
 
+app.get("/profile", requireLogin, (req, res) => {
+    res.render("profile", { title: "My Profile – SoundVault" });
+});
+ 
+
 
 // AUTH ROUTES  (/api/auth/*)
 //

@@ -1,7 +1,7 @@
 {
   "name": "cst_336_final",
   "version": "1.0.0",
-  "description": "",
+  "description": "https://soundvault-fs46.onrender.com",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

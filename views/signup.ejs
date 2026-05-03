@@ -11,12 +11,80 @@
                 <p class="text-muted">Start building your music library</p>
             </div>
 
-    
+            <% if (errors && errors.length > 0) { %>
+                <div class="alert alert-danger" role="alert">
+                    <% errors.forEach(err => { %>
+                        <div><%= err %></div>
+                    <% }); %>
+                </div>
+            <% } %>
+
+            <form action="/api/auth/signup" method="POST" id="signupForm">
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username"
+                           name="username" placeholder="Choose a username" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="display_name" class="form-label">Display Name</label>
+                    <input type="text" class="form-control" id="display_name"
+                           name="display_name" placeholder="Your name">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email"
+                           name="email" placeholder="your@email.com" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="favorite_genre" class="form-label">Favourite Genre</label>
+                    <select class="form-select" id="favorite_genre" name="favorite_genre">
+                        <option value="All">All Genres</option>
+                        <option value="Rock">Rock</option>
+                        <option value="Pop">Pop</option>
+                        <option value="Hip-Hop">Hip-Hop</option>
+                        <option value="R&B">R&amp;B</option>
+                        <option value="Jazz">Jazz</option>
+                        <option value="Classical">Classical</option>
+                        <option value="Electronic">Electronic</option>
+                        <option value="Country">Country</option>
+                        <option value="Indie">Indie</option>
+                        <option value="Ambient">Ambient</option>
+                        <option value="Other">Afrobeats</option>
+                        <option value="Other">Latin</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password"
+                           name="password" placeholder="At least 6 characters" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirmPassword"
+                           name="confirmPassword" placeholder="Repeat your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    Create Account
+                </button>
+            </form>
+
+            <p class="text-center mt-3">
+                Already have an account?
+                <a href="/login">Log in here</a>
+            </p>
 
         </div>
     </div>
 </main>
 
-<!-- <script src="/js/auth.js"></script> -->
+<script src="/js/auth.js"></script>
 
 <%- include("partials/footer") %>
