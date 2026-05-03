@@ -104,7 +104,9 @@ app.get("/profile", requireLogin, (req, res) => {
     res.render("profile", { title: "My Profile – SoundVault" });
 });
  
-
+app.get("/library",requireLogin, (req, res) => {
+    res.render("library", { title: "Your Library - Soundvault" });
+});
 
 // AUTH ROUTES  (/api/auth/*)
 //
