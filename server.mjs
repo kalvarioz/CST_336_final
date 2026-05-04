@@ -422,11 +422,12 @@ app.listen(PORT, () => {
 // Playlist features by Matthew Barrett
 // Generate Playlist
 //TODO:
-//1. Allow users to edit playlist name/description
+//1. Allow users to edit playlist name/description (DONE)
 //2. Allow users to delete playlists
 //3. Allow users to add songs to playlist when inside playlist.ejs route
-//4. Allow users to add songs to playlist when insdie index.ejs route
+//4. Allow users to add songs to playlist when insdie library.ejs route
 //5. Allow users to create accounts
+//6. Make it not look like shit
 
 app.post('/api/playlist', requireLogin, async (req, res) => {
     try {
@@ -482,6 +483,46 @@ app.get('/playlist/:id', requireLogin, async (req,res) => {
 app.get('/newPlaylist', requireLogin, async (req, res) => {
     res.render('newPlaylist.ejs');
 });
+
+//Edit existing Playlist
+app.get('/editPlaylist/:id', requireLogin, async (req, res) => {
+    const playlistId = req.params.id;
+    const userId = req.session.user_id;
+    const [rows] = await db.query
+    (`SELECT *
+      FROM playlists
+      WHERE playlist_id = ?
+      AND user_id = ?        
+     `,[playlistId, userId]);
+    if (rows.length == 0) {
+        return res.render('playlists');
+    }
+    res.render('editPlaylist', {playlist: rows[0]});
+});
+
+app.post('/api/editPlaylist', requireLogin, async (req, res) => {
+    try {
+        const { name, description, playlistId } = req.body;
+        const userId = req.session.user_id;
+        if (name == null || name == undefined) {
+            return res.send("Playlist must have a name");
+        }
+        let trimmedName = name.trim();
+        if (trimmedName.length <= 3) {
+            return res.send("Playlist name must be longer than three characters");
+        }
+        const [rows] = await db.query(`
+            UPDATE playlists
+            SET name = ?, description = ?
+            WHERE playlist_id = ?
+            `, [trimmedName, description || null, playlistId]);
+        res.redirect('/playlists');
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Playlist failed" });
+        // not 100% sure what this does but it was in every other try catch and i dont wanna cause problems
+    }
+}); 
 
 // ============================================================
 // 404 HANDLER

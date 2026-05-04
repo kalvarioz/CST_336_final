@@ -10,12 +10,13 @@
             <% for (i of playlists) { %>
                 <li>
                     <a href="/playlist/<%=i.playlist_id%>"><%=i.name%></a>
+                    <a href="/editPlaylist/<%=i.playlist_id%>" class="btn btn-outline-dark me-3 btn-sm">Edit</a>
                 </li>
             <% } %>
         <% } %>
     </ul>
-    <a href="/newPlaylist" class="btn btn-outline-light me-3 btn-sm">Create a new Playlist</a>
+    <a href="/newPlaylist" class="btn btn-outline-dark me-3 btn-sm">Create a new Playlist</a>
     <br>
-    <a href="/index">Home</a>
+    <a href="/index" class="btn btn-outline-dark me-3 btn-sm">Return Home</a>
 </body>
 </html>

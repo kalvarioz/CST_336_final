@@ -1,0 +1,21 @@
+<%- include("partials/header") %>
+
+<body>
+    <h1>Edit <%= playlist.name %></h1>
+    <div class="mb-3">
+        <form action ="/api/editPlaylist" method ="POST" >
+            <input type="hidden" name = "playlistId" value="<%=playlist.playlist_id%>">
+            <label>Playlist Name:</label>
+            <br>
+            <input type="text" name="name" required value = "<%=playlist.name%>">
+            <br>
+            <label>Playlist Description:</label>
+            <br>
+            <textarea name="description"><%= playlist.description %></textarea>
+            <br>
+            <button type = "submit" class="btn btn-outline-dark me-3 btn-sm">Update</button>
+        </form>
+    </div>
+    <a href="/playlists" class="btn btn-outline-dark me-3 btn-sm">Back to Playlists</a>
+</body>
+</html>
