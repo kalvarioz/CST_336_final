@@ -4,26 +4,21 @@
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
 
-            <!-- Page header -->
             <div class="mb-4">
                 <h2><i class="bi bi-person-circle me-2 text-primary"></i>My Profile</h2>
                 <p class="text-muted">Manage your account information</p>
             </div>
 
-            <!-- Success / error alerts (shown by JS) -->
             <div id="profileAlert" class="d-none mb-3"></div>
 
+            <!-- Profile card -->
             <div class="card shadow-sm">
                 <div class="card-body p-4">
 
-                    <!-- Avatar + username header -->
                     <div class="d-flex align-items-center mb-4">
-                        <div
-                            id="avatarCircle"
-                            class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 fs-4 fw-bold"
-                            style="width: 56px; height: 56px; flex-shrink: 0;"
-                        >
-                            <!-- Initials filled by JS -->
+                        <div id="avatarCircle"
+                             class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 fs-4 fw-bold"
+                             style="width: 56px; height: 56px; flex-shrink: 0;">
                         </div>
                         <div>
                             <h5 class="mb-0" id="headerDisplayName">Loading…</h5>
@@ -31,41 +26,17 @@
                         </div>
                     </div>
 
-                    <!-- Edit profile form (Fetch API — no full page reload) -->
-                    <!--
-                        Rubric: UPDATE SQL with 3+ fields (display_name, email, favorite_genre)
-                        Pre-filled from GET /api/user/profile on page load.
-                        Client-side JS sends PUT /api/user/profile via fetch().
-                    -->
                     <form id="profileForm" novalidate>
-
-                        <!-- Display name -->
                         <div class="mb-3">
                             <label for="display_name" class="form-label fw-semibold">Display Name</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="display_name"
-                                name="display_name"
-                                placeholder="How others see you"
-                                required
-                            >
+                            <input type="text" class="form-control" id="display_name"
+                                   name="display_name" placeholder="How others see you" required>
                         </div>
-
-                        <!-- Email -->
                         <div class="mb-3">
                             <label for="email" class="form-label fw-semibold">Email</label>
-                            <input
-                                type="email"
-                                class="form-control"
-                                id="email"
-                                name="email"
-                                placeholder="your@email.com"
-                                required
-                            >
+                            <input type="email" class="form-control" id="email"
+                                   name="email" placeholder="your@email.com" required>
                         </div>
-
-                        <!-- Favourite genre (select — 3rd form element type) -->
                         <div class="mb-4">
                             <label for="favorite_genre" class="form-label fw-semibold">Favourite Genre</label>
                             <select class="form-select" id="favorite_genre" name="favorite_genre">
@@ -80,10 +51,10 @@
                                 <option value="Country">Country</option>
                                 <option value="Indie">Indie</option>
                                 <option value="Ambient">Ambient</option>
+                                <option value="Ambient">Afrobeats</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
-
                         <button type="submit" class="btn btn-primary w-100" id="saveBtn">
                             <span id="saveBtnText">Save Changes</span>
                             <span id="saveBtnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
@@ -93,7 +64,21 @@
                 </div>
             </div>
 
-            <!-- Back to library link -->
+            <!-- Danger Zone -->
+            <div class="card shadow-sm mt-4 border-danger">
+                <div class="card-body p-4">
+                    <h6 class="text-danger fw-semibold mb-1">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Are you leaving us ?
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        Deleting your account is permanent. All your playlists will be lost.
+                    </p>
+                    <button class="btn btn-outline-danger btn-sm" id="deleteAccountBtn">
+                        <i class="bi bi-trash me-1"></i>Delete My Account
+                    </button>
+                </div>
+            </div>
+
             <div class="text-center mt-3">
                 <a href="/index" class="text-muted small">
                     <i class="bi bi-arrow-left me-1"></i>Back to Library
@@ -104,6 +89,33 @@
     </div>
 </main>
 
-<script src="/js/profile.js"></script>
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Delete Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete your account? This will permanently erase:</p>
+                <ul>
+                    <li>Your profile information</li>
+                    <li>All your playlists</li>
+                </ul>
+                <p class="fw-semibold">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">
+                    Yes, delete my account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script src="/js/profile.js"></script>
 <%- include("partials/footer") %>

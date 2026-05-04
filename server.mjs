@@ -298,6 +298,67 @@ app.put("/api/user/profile", requireLogin, async (req, res) => {
     }
 });
 
+app.delete("/api/user/profile", requireLogin, async (req, res) => {
+    try {
+        const userId = req.session.user_id;
+ 
+        await db.query("DELETE FROM users WHERE user_id = ?", [userId]);
+ 
+        // Destroy session after deletion
+        req.session.destroy(() => {
+            res.json({ message: "Account deleted." });
+        });
+ 
+    } catch (err) {
+        console.error("[DELETE /api/user/profile]", err);
+        res.status(500).json({ error: "Failed to delete account." });
+    }
+});
+
+async function requireAdmin(req, res, next) {
+    if (!req.session.admin_id) {
+        return res.status(403).json({ error: "Access denied." });
+    }
+    next();
+}
+ 
+// GET /api/admin/users — liste all users users
+app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+        const [users] = await db.query(
+            `SELECT user_id, username, display_name, email, favorite_genre, created_at
+             FROM users
+             ORDER BY created_at DESC`
+        );
+        res.json(users);
+    } catch (err) {
+        console.error("[GET /api/admin/users]", err);
+        res.status(500).json({ error: "Failed to load users." });
+    }
+});
+ 
+// DELETE /api/admin/users/:id — delete an user
+app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id, 10);
+ 
+        const [result] = await db.query(
+            "DELETE FROM users WHERE user_id = ?",
+            [userId]
+        );
+ 
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "User not found." });
+        }
+ 
+        res.json({ message: "User deleted." });
+ 
+    } catch (err) {
+        console.error("[DELETE /api/admin/users/:id]", err);
+        res.status(500).json({ error: "Failed to delete user." });
+    }
+});
+
 // MUSICBRAINZ API  (/api/musicbrainz/*)
 // Rubric: 2+ external Web APIs
 app.get("/api/musicbrainz/search", async (req, res) => {

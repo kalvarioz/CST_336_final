@@ -30,6 +30,37 @@
     <form action="/downloadSongs">
         
     </form>
+
+    <!-- User Management — Maeva Akpaca -->
+    <hr>
+    <h2>Manage Users</h2>
+    <div id="adminAlert"></div>
+    <table border="1" id="userTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Display Name</th>
+                <th>Email</th>
+                <th>Genre</th>
+                <th>Joined</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <tr><td colspan="7">Loading users…</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Delete User Modal -->
+    <div id="deleteUserModal" style="display:none; position:fixed; top:30%; left:35%; background:white; border:1px solid #ccc; padding:20px; z-index:999;">
+        <p>Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
+        <p>This will permanently delete their account and all their playlists.</p>
+        <button id="confirmDeleteUserBtn">Yes, delete</button>
+        <button onclick="document.getElementById('deleteUserModal').style.display='none'">Cancel</button>
+    </div>
+
+    <script src="/js/admin.js"></script>
  
 </body>
 </html>
