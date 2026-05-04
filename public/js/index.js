@@ -99,8 +99,20 @@ function renderSongList(songs) {
         row.addEventListener("click", () => {
             const songId = parseInt(row.dataset.songId, 10);
             selectSong(songId);
+            updatePlaylist(songId);
         });
     });
+}
+// updates which song is being selected so we can implement it into the playlist
+function updatePlaylist(songId) {
+    const songIdInput = document.getElementById("songIdInput");
+    if (songIdInput != null) {
+        songIdInput.value = songId;
+    }
+    const addPlaylistForm = document.querySelector("#addToPlaylist");
+    if (addPlaylistForm != null) {
+        addPlaylistForm.classList.remove("d-none");
+    }
 }
 
 // SELECT A SONG — play it + show info panel

@@ -104,8 +104,14 @@ app.get("/profile", requireLogin, (req, res) => {
     res.render("profile", { title: "My Profile – SoundVault" });
 });
  
-app.get("/library",requireLogin, (req, res) => {
-    res.render("library", { title: "Your Library - Soundvault" });
+app.get("/library",requireLogin, async (req, res) => {
+    const userId = req.session.user_id;
+    const [playlists] = await db.query
+    (` SELECT *
+       FROM playlists
+       WHERE user_id = ?`, [userId]
+    );
+    res.render("library", { playlists, title: "Your Library - Soundvault" });
 });
 
 // AUTH ROUTES  (/api/auth/*)
@@ -423,11 +429,12 @@ app.listen(PORT, () => {
 // Generate Playlist
 //TODO:
 //1. Allow users to edit playlist name/description (DONE)
-//2. Allow users to delete playlists
-//3. Allow users to add songs to playlist when inside playlist.ejs route
-//4. Allow users to add songs to playlist when insdie library.ejs route
+//2. Allow users to delete playlists (DONE)
+//3. Allow users to add songs to playlist when inside Library.ejs route (Done)
+//4. Allow users to remove songs from playlist (Done)
 //5. Allow users to create accounts
 //6. Make it not look like shit
+//7. Let users play their playlists (done)
 
 app.post('/api/playlist', requireLogin, async (req, res) => {
     try {
@@ -467,6 +474,7 @@ app.get('/playlists', requireLogin, async (req, res) => {
 app.get('/playlist/:id', requireLogin, async (req,res) => {
     const userId = req.session.user_id;
     const playlistId = req.params.id;
+    //get playlist
     const [rows] = await db.query
     (`SELECT *
       FROM playlists
@@ -476,7 +484,15 @@ app.get('/playlist/:id', requireLogin, async (req,res) => {
     if (rows.length == 0) {
         return res.render('playlists');
     }
-    res.render('playlist', {playlist: rows[0]});
+    //get songs
+    const [songs] = await db.query
+    (`SELECT songs.song_id, songs.title, songs.artist, playlist_songs.position
+      FROM songs
+      JOIN playlist_songs ON songs.song_id = playlist_songs.song_id
+      WHERE playlist_songs.playlist_id = ?
+      ORDER BY playlist_songs.position
+      `, [playlistId]);
+    res.render('playlist', {playlist: rows[0], songs});
 });
 
 // Create new playlist
@@ -538,6 +554,64 @@ app.post('/api/deletePlaylist', requireLogin, async (req, res) => {
         res.status(500).json({ error: "Delete Playlist failed" });
     }
 }); 
+
+//Add song to playist
+app.post('/api/addToPlaylist', requireLogin, async (req, res) => {
+    try {
+        const { songId, playlistId } = req.body;
+        console.log("song: ", songId);
+        console.log("playlist: ", playlistId);
+        const [result] = await db.query(`
+            SELECT MAX(position) AS maxPosition
+            FROM playlist_songs
+            WHERE playlist_id = ?
+            `, [playlistId]);
+        if (result[0] == null) {
+            console.log("Could not find correct position");
+            return res.redirect('/library')
+        }
+        const position = (result[0].maxPosition) + 1;
+        const userId = req.session.user_id;
+        const [rows] = await db.query(`
+            INSERT INTO playlist_songs (playlist_id, song_id, position)
+            VALUES (?,?, ?)`, [playlistId, songId, position])
+        res.redirect('/library')
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Adding to playlist failed"});
+    }
+});
+
+//Remove song from playlist
+app.post('/playlist/:playlistId/delete/:songId', requireLogin, async (req, res) => {
+    const userId = req.session.user_id;
+    const playlistId = req.params.playlistId;
+    const songId = req.params.songId;
+    try {
+        const [rows] = await db.query(`
+            SELECT *
+            FROM playlist_songs
+            WHERE playlist_id = ? AND song_id = ?
+            `, [playlistId, songId]);
+        console.log("rows:" + rows);
+        if (rows.length == 0) {
+            return res.redirect('/library');
+        }
+        let positionToDelete = rows[0].position;
+        await db.query(`
+            UPDATE playlist_songs
+            SET position = position - 1
+            WHERE playlist_id = ?
+            AND position > ?`, [playlistId, positionToDelete]);
+        await db.query(`
+            DELETE FROM playlist_songs
+            WHERE playlist_id = ? AND song_id = ?`, [playlistId, songId]);
+        res.redirect('/library');
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Delete from Playlist failed"});
+    }
+});
 
 // ============================================================
 // 404 HANDLER

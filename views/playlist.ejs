@@ -9,15 +9,38 @@
         <p>No description provided</p>
     <% } %>
     <h3>Songs</h3>
-    <% if (playlist.songs && playlist.songs.length > 0) {%>
+    <% if (songs && songs.length > 0) {%>
         <ul>
-            <% for (let song of playlist.song) { %>
-                <li><%= song.name %> by <%= song.artist %></li>
+            <% for (let song of songs) { %>
+                <li><%= song.title %> by <%= song.artist %></li>
+                <form action="/playlist/<%= playlist.playlist_id %>/delete/<%= song.song_id %>" method="POST">
+                    <button type = "submit" class="btn btn-outline-dark me-3 btn-sm" onclick="return confirm('Are you sure?')">Remove</button>
+                </form>
             <% } %>
         </ul>
+        <button id="playButton" class="btn btn-outline-dark me-3 btn-sm">Play</button>
     <%} else { %>
         <p>Playlist is empty</p>
     <% } %>
+    <br>
     <a href="/playlists" class="btn btn-outline-dark me-3 btn-sm">Back to Playlists</a>
+    <!-- Audio Player by brandon -->
+    <section class="mt-4 mb-4 p-3 bg-light rounded" id="playerSection">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <p class="mb-0 fw-bold" id="nowPlayingTitle">No song selected</p>
+                <p class="mb-0 text-muted small" id="nowPlayingArtist">—</p>
+            </div>
+            <div class="col-md-8">
+                <audio id="audioPlayer" controls class="w-100">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+    </section>
 </body>
+<script>
+        const songs = <%- JSON.stringify(songs) %>;
+</script>
+<script src="/js/playlist.js"></script>
 </html>
