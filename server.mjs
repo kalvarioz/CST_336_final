@@ -113,7 +113,24 @@ app.get("/library",requireLogin, async (req, res) => {
     );
     res.render("library", { playlists, title: "Your Library - Soundvault" });
 });
-
+app.get("/api/songs/featured", requireLogin, async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit) || 4, 8);
+        const [rows] = await db.query(
+            `SELECT song_id, title, artist, album, genre, mb_release_id
+             FROM   songs
+             WHERE  mb_release_id IS NOT NULL
+               AND  mb_release_id <> ''
+             ORDER  BY RAND()
+             LIMIT  ?`,
+            [limit]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error("[GET /api/songs/featured]", err);
+        res.status(500).json({ error: "Failed to load featured songs" });
+    }
+});
 // AUTH ROUTES  (/api/auth/*)
 //
 // These use traditional form submission (not fetch/JSON).

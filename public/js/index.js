@@ -6,34 +6,34 @@
 //   2. GET /api/songs/stream/:id: local API, streams audio through Express proxy
 //   3. GET /api/musicbrainz/search: local API that calls the external MusicBrainz API
 //
-// This file provides 100+ lines of client-side JavaScript (rubric: 50+ lines).
+// Brandon Calvario
 
 // DOM REFERENCES
 const songListBody = document.getElementById("songList");
-const searchInput= document.getElementById("searchInput");
+const searchInput = document.getElementById("searchInput");
 const genreFilter = document.getElementById("genreFilter");
 const searchBtn = document.getElementById("searchBtn");
-const audioPlayer= document.getElementById("audioPlayer");
-const nowPlayingTitle= document.getElementById("nowPlayingTitle");
+const audioPlayer = document.getElementById("audioPlayer");
+const nowPlayingTitle = document.getElementById("nowPlayingTitle");
 const nowPlayingArtist = document.getElementById("nowPlayingArtist");
 // Info panel elements
-const infoPanelEmpty= document.getElementById("infoPanelEmpty");
+const infoPanelEmpty = document.getElementById("infoPanelEmpty");
 const infoPanelContent = document.getElementById("infoPanelContent");
 const coverArt = document.getElementById("coverArt");
 const coverArtFallback = document.getElementById("coverArtFallback");
 const infoTitle = document.getElementById("infoTitle");
-const infoArtist= document.getElementById("infoArtist");
-const infoAlbum= document.getElementById("infoAlbum");
+const infoArtist = document.getElementById("infoArtist");
+const infoAlbum = document.getElementById("infoAlbum");
 const infoGenre = document.getElementById("infoGenre");
 // MusicBrainz panel elements
-const mbSection= document.getElementById("mbSection");
+const mbSection = document.getElementById("mbSection");
 const mbLoading = document.getElementById("mbLoading");
 const mbError = document.getElementById("mbError");
 const mbDate = document.getElementById("mbDate");
 const mbCountry = document.getElementById("mbCountry");
 const mbTracklist = document.getElementById("mbTracklist");
 // Keep track of currently loaded songs and selected song
-let currentSongs  = [];
+let currentSongs = [];
 let selectedSongId = null;
 // FORMAT HELPERS
 // Convert seconds to M:SS
@@ -115,7 +115,7 @@ function updatePlaylist(songId) {
     }
 }
 
-// SELECT A SONG — play it + show info panel
+// SELECT A SONG,  play it + show info panel
 function selectSong(songId) {
     const song = currentSongs.find(s => s.song_id === songId);
     if (!song) return;
@@ -135,7 +135,7 @@ function selectSong(songId) {
         console.log("Autoplay blocked:", err.message);
     });
     // Update "Now Playing" bar
-    nowPlayingTitle.textContent  = song.title;
+    nowPlayingTitle.textContent = song.title;
     nowPlayingArtist.textContent = song.artist;
     showInfoPanel(song);
     fetchMusicBrainzInfo(song);

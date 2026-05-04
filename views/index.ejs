@@ -1,12 +1,37 @@
 <%- include("partials/header") %>
 <body>
 <h1> Welcome, <%= user.displayName %>!</h1>
-<!-- TODO: build the home page, i.e., welcome, featured songs, maybe include featured
- artists, etc..-->
-<div class="featured">
-<!-- TODO:
- We will need to add a moving display of music covers to show as featured. -->
-</div>
+  <section class="mb-5">
+        <h4 class="mb-3">Featured</h4>
 
+        <!-- Outer wrapper hides overflow, inner track scrolls -->
+        <div class="marquee-wrapper">
+            <div class="marquee-track" id="marqueeTrack">
+                <!-- Populated by home.js -->
+            </div>
+        </div>
+
+        <!-- Loading / empty states -->
+        <div id="featuredLoading" class="text-center text-muted py-4">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Loading featured albums…
+        </div>
+        <div id="featuredEmpty" class="text-center text-muted py-4 d-none">
+            <p class="mt-2">No enriched songs yet. Play a song to trigger MusicBrainz lookup!</p>
+        </div>
+    </section>
+    <section class="mb-5">
+        <h4 class="mb-3">Discover Something New</h4>
+        <div class="row g-3" id="featuredGrid">
+            <!-- Populated by home.js -->
+        </div>
+        <div class="text-center mt-3">
+            <button class="btn btn-outline-primary btn-sm" id="refreshFeatured">
+                <i class="bi bi-arrow-clockwise me-1"></i> Show me different picks
+            </button>
+        </div>
+    </section>
 </body>
+<script src="/js/home.js"></script>
+
 <%- include("partials/footer") %>

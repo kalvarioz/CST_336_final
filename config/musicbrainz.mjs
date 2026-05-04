@@ -142,7 +142,7 @@ export async function searchRelease(artist, album) {
 }
 
 
-// lookupRelease(mbReleaseId)
+// lookupReease(mbReleaseId)
 // Full lookup by ID: returns tracklist + release-group ID.
 export async function lookupRelease(mbReleaseId) {
     await rateLimit();
@@ -200,7 +200,7 @@ export async function enrichSong(artist, album) {
     // MusicBrainz credits albums to the PRIMARY artist only,
     // so we strip everything after common separators.
     const primaryArtist = cleanArtist(artist);
-    // Step 2 — search for the release
+    // Step 2: search for the release
     // Try the primary artist first; if that fails, try the original string
     let searchResult = await searchRelease(primaryArtist, album);
     if (!searchResult && primaryArtist !== artist) {

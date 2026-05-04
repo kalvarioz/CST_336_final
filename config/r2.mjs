@@ -1,6 +1,6 @@
 // config/r2.mjs
 // Cloudflare R2 client setup (ES Module version).
-// R2 is S3-compatible — these credentials NEVER leave the server.
+// R2 is S3-compatible, these credentials NEVER leave the server.
 
 // Brandon Calvario 
 

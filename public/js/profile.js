@@ -41,8 +41,8 @@ async function loadProfile() {
             throw new Error(`HTTP ${response.status}`);
         }
         const profile = await response.json();
-        document.getElementById("display_name").value   = profile.display_name  || "";
-        document.getElementById("email").value          = profile.email          || "";
+        document.getElementById("display_name").value = profile.display_name || "";
+        document.getElementById("email").value = profile.email || "";
         document.getElementById("favorite_genre").value = profile.favorite_genre || "All";
         updateHeader(profile.display_name, profile.username);
     } catch (err) {
@@ -57,8 +57,8 @@ async function loadProfile() {
 
 async function saveProfile(e) {
     e.preventDefault();
-    const displayName   = document.getElementById("display_name").value.trim();
-    const email         = document.getElementById("email").value.trim();
+    const displayName = document.getElementById("display_name").value.trim();
+    const email = document.getElementById("email").value.trim();
     const favoriteGenre = document.getElementById("favorite_genre").value;
 
     const errors = [];
@@ -66,8 +66,8 @@ async function saveProfile(e) {
     if (!email || !email.includes("@") || !email.includes(".")) errors.push("Please enter a valid email.");
     if (errors.length > 0) { showAlert(errors.join(" "), "warning"); return; }
 
-    const saveBtn    = document.getElementById("saveBtn");
-    const btnText    = document.getElementById("saveBtnText");
+    const saveBtn = document.getElementById("saveBtn");
+    const btnText = document.getElementById("saveBtnText");
     const btnSpinner = document.getElementById("saveBtnSpinner");
     saveBtn.disabled = true;
     btnText.textContent = "Saving…";

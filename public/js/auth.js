@@ -1,3 +1,7 @@
+// validation functions for login and sign-up
+// Brandon Calvario
+
+
 function showClientErrors(containerId, errors) {
     // Remove any existing client-side error box
     const existing = document.getElementById(containerId);
@@ -40,8 +44,6 @@ if (loginForm) {
         // (no e.preventDefault(), so the browser POSTs to action URL)
     });
 }
-
-// SIGNUP FORM VALIDATION
 const signupForm = document.getElementById("signupForm");
 if (signupForm) {
     signupForm.addEventListener("submit", (e) => {
