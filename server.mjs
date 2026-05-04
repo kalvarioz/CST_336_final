@@ -519,8 +519,23 @@ app.post('/api/editPlaylist', requireLogin, async (req, res) => {
         res.redirect('/playlists');
     } catch (err) {
         console.log(err);
-        res.status(500).json({ error: "Playlist failed" });
-        // not 100% sure what this does but it was in every other try catch and i dont wanna cause problems
+        res.status(500).json({ error: "Edit Playlist failed" });
+    }
+}); 
+
+//Delete playlist
+app.post('/api/deletePlaylist', requireLogin, async (req, res) => {
+    try {
+        const { playlistId } = req.body;
+        const userId = req.session.user_id;
+        const [rows] = await db.query(`
+            DELETE FROM playlists
+            WHERE playlist_id = ? AND user_id = ?
+            `, [playlistId, userId]);
+        res.redirect('/playlists');
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Delete Playlist failed" });
     }
 }); 
 

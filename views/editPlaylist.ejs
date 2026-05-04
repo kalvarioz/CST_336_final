@@ -15,6 +15,10 @@
             <br>
             <button type = "submit" class="btn btn-outline-dark me-3 btn-sm">Update</button>
         </form>
+        <form action ="/api/deletePlaylist" method="POST">
+            <input type="hidden" name = "playlistId" value="<%=playlist.playlist_id%>">
+            <button type = "submit" class="btn btn-outline-dark me-3 btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+        </form>
     </div>
     <a href="/playlists" class="btn btn-outline-dark me-3 btn-sm">Back to Playlists</a>
 </body>
