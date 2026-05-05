@@ -337,15 +337,9 @@ app.delete("/api/user/profile", requireLogin, async (req, res) => {
     }
 });
 
-async function requireAdmin(req, res, next) {
-    if (!req.session.admin_id) {
-        return res.status(403).json({ error: "Access denied." });
-    }
-    next();
-}
- 
-// GET /api/admin/users — liste all users users
-app.get("/api/admin/users", requireAdmin, async (req, res) => {
+
+// GET /api/admin/users — list all users
+app.get("/api/admin/users", requireLogin, async (req, res) => {
     try {
         const [users] = await db.query(
             `SELECT user_id, username, display_name, email, favorite_genre, created_at
@@ -360,7 +354,7 @@ app.get("/api/admin/users", requireAdmin, async (req, res) => {
 });
  
 // DELETE /api/admin/users/:id — delete an user
-app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+app.delete("/api/admin/users/:id", requireLogin, async (req, res) => {
     try {
         const userId = parseInt(req.params.id, 10);
  
