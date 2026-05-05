@@ -274,6 +274,19 @@ a:hover {
     --bs-table-active-bg: var(--accent-subtle);
     --bs-table-active-color: var(--text);
 }
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
 .table thead th {
     color: var(--text-muted);
     font-family: "Bebas Neue", sans-serif;

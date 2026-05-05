@@ -241,24 +241,26 @@ app.get("/api/songs/stream/:id", requireLogin, async (req, res) => {
         // 1. Get the cloud key from the API (never from the client)
         const cloudKey = await getCloudKey(req.params.id);
         if (!cloudKey) return res.status(404).send("Song not found");
+
         console.log("[STREAM] Fetching:", cloudKey);
+
         // 2. Fetch from R2 (pass Range header for seeking)
         const getCmd = new GetObjectCommand({
             Bucket: BUCKET_NAME,
-            Key:cloudKey,
-            Range:req.headers.range,
+            Key:    cloudKey,
+            Range:  req.headers.range,
         });
         const r2Response = await r2Client.send(getCmd);
 
         // 3. Determine content type
         const ext = cloudKey.split(".").pop().toLowerCase();
         const mimeTypes = {
-            mp3:"audio/mpeg",
-            m4a:"audio/mp4",
-            mp4:"audio/mp4",
-            flac:"audio/flac",
-            ogg:"audio/ogg",
-            wav:"audio/wav",
+            mp3:  "audio/mpeg",
+            m4a:  "audio/mp4",
+            mp4:  "audio/mp4",
+            flac: "audio/flac",
+            ogg:  "audio/ogg",
+            wav:  "audio/wav",
         };
         const contentType = r2Response.ContentType
             || mimeTypes[ext]
@@ -273,18 +275,21 @@ app.get("/api/songs/stream/:id", requireLogin, async (req, res) => {
         }
         res.setHeader("Accept-Ranges", "bytes");
         res.setHeader("Cache-Control", "no-store");
+        // Prevent download — tell the browser to play inline, not save
+        res.setHeader("Content-Disposition", "inline");
+
         // 5. Pipe the R2 stream to the browser
         r2Response.Body.pipe(res);
         r2Response.Body.on("error", err => {
             console.error("[STREAM] R2 stream error:", err);
             if (!res.headersSent) res.status(500).end();
         });
+
     } catch (err) {
         console.error("[STREAM] Error:", err);
         if (!res.headersSent) res.status(500).send("Stream failed");
     }
 });
-
 
 // USER PROFILE API  (/api/user/*)
 // Rubric: UPDATE SQL with at least 3 fields, pre-filled form
